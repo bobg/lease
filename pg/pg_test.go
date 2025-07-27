@@ -43,14 +43,19 @@ func withDB(ctx context.Context, t *testing.T, f func(*sql.DB)) {
 		dbuser   = os.Getenv("POSTGRES_USER")
 		dbpasswd = os.Getenv("POSTGRES_PASSWORD")
 	)
+
+	if dbuser == "" {
+		t.Skip("POSTGRES_USER must be set")
+	}
+
 	if dbhost == "" {
 		dbhost = "localhost"
 	}
 	if dbport == "" {
 		dbport = "5432"
 	}
-	if dbname == "" || dbuser == "" || dbpasswd == "" {
-		t.Skip("POSTGRES_DB, POSTGRES_USER, and POSTGRES_PASSWORD must be set")
+	if dbname == "" {
+		dbname = dbuser
 	}
 
 	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbhost, dbport, dbuser, dbpasswd, dbname))
