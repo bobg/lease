@@ -12,7 +12,6 @@ jobs:
     services:
       postgres:
         image: postgres
-        restart: always
         env:
           POSTGRES_DB: test
           POSTGRES_USER: test
