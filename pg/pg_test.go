@@ -37,15 +37,23 @@ func TestLeader(t *testing.T) {
 
 func withDB(ctx context.Context, t *testing.T, f func(*sql.DB)) {
 	var (
+		dbhost   = os.Getenv("POSTGRES_HOST")
+		dbport   = os.Getenv("POSTGRES_PORT")
 		dbname   = os.Getenv("POSTGRES_DB")
 		dbuser   = os.Getenv("POSTGRES_USER")
 		dbpasswd = os.Getenv("POSTGRES_PASSWORD")
 	)
+	if dbhost == "" {
+		dbhost = "localhost"
+	}
+	if dbport == "" {
+		dbport = "5432"
+	}
 	if dbname == "" || dbuser == "" || dbpasswd == "" {
 		t.Skip("POSTGRES_DB, POSTGRES_USER, and POSTGRES_PASSWORD must be set")
 	}
 
-	db, err := sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", dbuser, dbpasswd, dbname))
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbhost, dbport, dbuser, dbpasswd, dbname))
 	if err != nil {
 		t.Fatal(err)
 	}
