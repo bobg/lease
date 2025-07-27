@@ -105,10 +105,24 @@ func (p *Provider) Acquire(ctx context.Context, name string, exp time.Time) (str
 	const qfmt = `
 		INSERT INTO %s (name, secret, exp_secs) VALUES ($1, $2, $3)
 			ON CONFLICT (name) DO UPDATE SET secret = $2, exp_secs = $3
-				WHERE leases.exp_secs < EXTRACT(EPOCH FROM NOW())`
-	q := fmt.Sprintf(qfmt, p.table)
+				WHERE leases.exp_secs < %s`
 
-	res, err := p.db.ExecContext(ctx, q, name, secret, deadlineSecs)
+	var (
+		qargs   = []any{name, secret, deadlineSecs}
+		nowExpr string
+	)
+	if _, ok := p.Clock.(lease.DefaultClock); ok {
+		// OK to rely on the server's clock.
+		nowExpr = "EXTRACT(EPOCH FROM NOW())"
+	} else {
+		// Do not rely on the server's clock.
+		nowExpr = "$4"
+		qargs = append(qargs, p.Now().Unix())
+	}
+
+	q := fmt.Sprintf(qfmt, p.table, nowExpr)
+
+	res, err := p.db.ExecContext(ctx, q, qargs...)
 	if err != nil {
 		return "", errors.Wrapf(err, "acquiring lease", name)
 	}

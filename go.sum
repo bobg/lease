@@ -4,3 +4,5 @@ github.com/bobg/errors v1.1.0 h1:gsVanPzJMpZQpwY+27/GQYElZez5CuMYwiIpk2A3RGw=
 github.com/bobg/errors v1.1.0/go.mod h1:Q4775qBZpnte7EGFJqmvnlB1U4pkI1XmU3qxqdp7Zcc=
 github.com/bobg/retry v0.2.0 h1:KTP9QuVz5uNQSey8vGNCfORn3xVk764OU4uokya38Zk=
 github.com/bobg/retry v0.2.0/go.mod h1:3/o0gS58fhL1jk03VjNayhd30sdGfvGhUU3SJN8Ma74=
+github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
+github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=

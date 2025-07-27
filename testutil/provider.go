@@ -16,8 +16,6 @@ type Factory func(lease.Clock) (lease.Provider, error)
 
 // Provider tests the basic behavior of a [lease.Provider] implementation.
 func Provider(ctx context.Context, tb testing.TB, factory Factory) {
-	tb.Helper()
-
 	var (
 		mockClock = clock.NewMock()
 		t0        = time.Date(1977, 8, 5, 0, 0, 0, 0, time.UTC)

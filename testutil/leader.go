@@ -12,8 +12,6 @@ import (
 
 // Leader tests the ability of a [lease.Provider] implementation to support the [lease.Leader] behavior.
 func Leader(ctx context.Context, tb testing.TB, factory Factory) {
-	tb.Helper()
-
 	var (
 		mockClock = clock.NewMock()
 		t0        = time.Date(1977, 8, 5, 0, 0, 0, 0, time.UTC)
