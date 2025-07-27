@@ -60,10 +60,9 @@ func New(ctx context.Context, db *sql.DB, table string, opts ...Option) (*Provid
 				return
 
 			case <-p.After(5 * time.Minute):
-				const qfmt = `DELETE FROM %s WHERE exp_secs < EXTRACT(EPOCH FROM NOW())`
-				q := fmt.Sprintf(qfmt, table)
-				_, _ = db.ExecContext(ctx, q)
-
+				const qfmt = `DELETE FROM %s WHERE exp_secs < %s`
+				q, qargs := p.queryWithExpSecs(qfmt, nil)
+				_, _ = db.ExecContext(ctx, q, qargs...)
 			}
 		}
 	}()
@@ -107,20 +106,7 @@ func (p *Provider) Acquire(ctx context.Context, name string, exp time.Time) (str
 			ON CONFLICT (name) DO UPDATE SET secret = $2, exp_secs = $3
 				WHERE leases.exp_secs < %s`
 
-	var (
-		qargs   = []any{name, secret, deadlineSecs}
-		nowExpr string
-	)
-	if _, ok := p.Clock.(lease.DefaultClock); ok {
-		// OK to rely on the server's clock.
-		nowExpr = "EXTRACT(EPOCH FROM NOW())"
-	} else {
-		// Do not rely on the server's clock.
-		nowExpr = "$4"
-		qargs = append(qargs, p.Now().Unix())
-	}
-
-	q := fmt.Sprintf(qfmt, p.table, nowExpr)
+	q, qargs := p.queryWithExpSecs(qfmt, []any{name, secret, deadlineSecs})
 
 	res, err := p.db.ExecContext(ctx, q, qargs...)
 	if err != nil {
@@ -182,4 +168,19 @@ func (p *Provider) Release(ctx context.Context, name, secret string) error {
 	}
 
 	return nil
+}
+
+func (p *Provider) queryWithExpSecs(qfmt string, qargs []any) (string, []any) {
+	fmtargs := []any{p.table}
+
+	if _, ok := p.Clock.(lease.DefaultClock); ok {
+		// OK to rely on the server's clock.
+		fmtargs = append(fmtargs, "EXTRACT(EPOCH FROM NOW())")
+	} else {
+		// Do not rely on the server's clock.
+		fmtargs = append(fmtargs, fmt.Sprintf("$%d", len(qargs)+1))
+		qargs = append(qargs, p.Now().Unix())
+	}
+	q := fmt.Sprintf(qfmt, fmtargs...)
+	return q, qargs
 }
