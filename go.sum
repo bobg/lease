@@ -1,0 +1,6 @@
+github.com/benbjohnson/clock v1.3.5 h1:VvXlSJBzZpA/zum6Sj74hxwYI2DIxRWuNIoXAzHZz5o=
+github.com/benbjohnson/clock v1.3.5/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
+github.com/bobg/errors v1.1.0 h1:gsVanPzJMpZQpwY+27/GQYElZez5CuMYwiIpk2A3RGw=
+github.com/bobg/errors v1.1.0/go.mod h1:Q4775qBZpnte7EGFJqmvnlB1U4pkI1XmU3qxqdp7Zcc=
+github.com/bobg/retry v0.2.0 h1:KTP9QuVz5uNQSey8vGNCfORn3xVk764OU4uokya38Zk=
+github.com/bobg/retry v0.2.0/go.mod h1:3/o0gS58fhL1jk03VjNayhd30sdGfvGhUU3SJN8Ma74=
