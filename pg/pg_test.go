@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"slices"
 	"testing"
+	"time"
 
+	"github.com/benbjohnson/clock"
 	_ "github.com/lib/pq"
 
 	"github.com/bobg/lease"
@@ -65,4 +68,55 @@ func withDB(ctx context.Context, t *testing.T, f func(*sql.DB)) {
 	defer db.Close()
 
 	f(db)
+}
+
+func TestQueryWithExpSecs(t *testing.T) {
+	mockClock := clock.NewMock()
+	mockClock.Set(time.Date(1977, 8, 5, 0, 0, 0, 0, time.UTC))
+
+	cases := []struct {
+		clock     lease.Clock
+		qfmt      string
+		qargs     []any
+		wantQuery string
+		wantQargs []any
+	}{{
+		clock:     lease.DefaultClock{},
+		qfmt:      `SELECT * FROM %s WHERE exp_secs < %s`,
+		wantQuery: `SELECT * FROM table WHERE exp_secs < EXTRACT(EPOCH FROM NOW())`,
+	}, {
+		clock:     mockClock,
+		qfmt:      `SELECT * FROM %s WHERE exp_secs < %s`,
+		wantQuery: `SELECT * FROM table WHERE exp_secs < $1`,
+		wantQargs: []any{mockClock.Now().Unix()},
+	}, {
+		clock:     lease.DefaultClock{},
+		qfmt:      `UPDATE %s SET secret = $1, exp_secs = $2 WHERE name = $3 AND exp_secs < %s`,
+		qargs:     []any{"foo", 1, "bar"},
+		wantQuery: `UPDATE table SET secret = $1, exp_secs = $2 WHERE name = $3 AND exp_secs < EXTRACT(EPOCH FROM NOW())`,
+		wantQargs: []any{"foo", 1, "bar"},
+	}, {
+		clock:     mockClock,
+		qfmt:      `UPDATE %s SET secret = $1, exp_secs = $2 WHERE name = $3 AND exp_secs < %s`,
+		qargs:     []any{"foo", 1, "bar"},
+		wantQuery: `UPDATE table SET secret = $1, exp_secs = $2 WHERE name = $3 AND exp_secs < $4`,
+		wantQargs: []any{"foo", 1, "bar", mockClock.Now().Unix()},
+	}}
+
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("case_%02d", i+1), func(t *testing.T) {
+			p := &Provider{
+				Clock: tc.clock,
+				table: "table",
+			}
+
+			gotQuery, gotQargs := p.queryWithExpSecs(tc.qfmt, tc.qargs)
+			if gotQuery != tc.wantQuery {
+				t.Errorf("got query %q, want %q", gotQuery, tc.wantQuery)
+			}
+			if !slices.Equal(gotQargs, tc.wantQargs) {
+				t.Errorf("got args %v; want %v", gotQargs, tc.wantQargs)
+			}
+		})
+	}
 }
