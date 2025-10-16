@@ -21,9 +21,11 @@ type Provider interface {
 	// Renew extends the lease for the given name, using the provided secret.
 	// Its expiration time is reset to the given time
 	// or the deadline of the provided context (if it has one), whichever is earlier.
+	// If the lease is not held by the caller, it returns [ErrNotHeld].
 	Renew(ctx context.Context, name, secret string, exp time.Time) error
 
 	// Release releases the lease for the given name, using the provided secret.
+	// If the lease is not held by the caller, it returns [ErrNotHeld].
 	Release(ctx context.Context, name, secret string) error
 }
 

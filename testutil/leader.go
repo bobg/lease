@@ -41,7 +41,7 @@ func Leader(ctx context.Context, tb testing.TB, factory Factory) {
 	defer cancel()
 
 	go func() {
-		player1Err = leader.Run(ctx, provider, func(context.Context) error {
+		_, player1Err = leader.Run(ctx, provider, func(context.Context) error {
 			close(player1Running)
 			<-player1Exit
 			return nil
@@ -60,7 +60,7 @@ func Leader(ctx context.Context, tb testing.TB, factory Factory) {
 	player2Running := make(chan struct{})
 
 	go func() {
-		_ = leader.Run(ctx, provider, func(context.Context) error {
+		leader.Run(ctx, provider, func(context.Context) error {
 			close(player2Running)
 			return nil
 		})
