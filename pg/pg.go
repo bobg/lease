@@ -110,11 +110,11 @@ func (p *Provider) Acquire(ctx context.Context, name string, exp time.Time) (str
 
 	res, err := p.db.ExecContext(ctx, q, qargs...)
 	if err != nil {
-		return "", errors.Wrapf(err, "acquiring lease", name)
+		return "", errors.Wrapf(err, "acquiring lease %s", name)
 	}
 	aff, err := res.RowsAffected()
 	if err != nil {
-		return "", errors.Wrapf(err, "counting affected rows", name)
+		return "", errors.Wrap(err, "counting affected rows")
 	}
 	if aff == 0 {
 		return "", lease.ErrHeld
@@ -138,11 +138,11 @@ func (p *Provider) Renew(ctx context.Context, name, secret string, exp time.Time
 
 	res, err := p.db.ExecContext(ctx, q, expSecs, name, secret, nowSecs)
 	if err != nil {
-		return errors.Wrapf(err, "renewing lease", name)
+		return errors.Wrapf(err, "renewing lease %s", name)
 	}
 	aff, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrapf(err, "counting affected rows", name)
+		return errors.Wrap(err, "counting affected rows")
 	}
 	if aff == 0 {
 		return lease.ErrNotHeld
@@ -157,11 +157,11 @@ func (p *Provider) Release(ctx context.Context, name, secret string) error {
 
 	res, err := p.db.ExecContext(ctx, q, name, secret)
 	if err != nil {
-		return errors.Wrapf(err, "releasing lease", name)
+		return errors.Wrapf(err, "releasing lease %s", name)
 	}
 	aff, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrapf(err, "counting affected rows", name)
+		return errors.Wrap(err, "counting affected rows")
 	}
 	if aff == 0 {
 		return lease.ErrNotHeld
