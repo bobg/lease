@@ -16,8 +16,6 @@ import (
 type (
 	// Provider is a lease.Provider implemented in memory.
 	Provider struct {
-		lease.Clock
-
 		mu     sync.Mutex
 		leases map[string]leasePair
 	}
@@ -33,7 +31,6 @@ var _ lease.Provider = &Provider{}
 // New creates a new in-memory lease provider.
 func New() *Provider {
 	return &Provider{
-		Clock:  lease.DefaultClock{},
 		leases: make(map[string]leasePair),
 	}
 }
@@ -47,7 +44,7 @@ func (p *Provider) Acquire(ctx context.Context, name string, exp time.Time) (str
 	defer p.mu.Unlock()
 
 	pair, ok := p.leases[name]
-	if ok && pair.exp.After(p.Now()) {
+	if ok && pair.exp.After(time.Now()) {
 		return "", lease.ErrHeld
 	}
 
@@ -100,5 +97,5 @@ func (p *Provider) Release(_ context.Context, name, secret string) error {
 // Precondition: the caller must hold the mutex.
 func (p *Provider) isHeld(name, secret string) (leasePair, bool) {
 	pair, ok := p.leases[name]
-	return pair, ok && pair.secret == secret && pair.exp.After(p.Now())
+	return pair, ok && pair.secret == secret && pair.exp.After(time.Now())
 }

@@ -10,8 +10,6 @@ import (
 
 // Provider is the type of a lease provider.
 type Provider interface {
-	Clock
-
 	// Acquire acquires a lease if available and returns a secret, needed for Renew and Release.
 	// The lease expires at the given time,
 	// or at the deadline of the provided context (if it has one), whichever is earlier.

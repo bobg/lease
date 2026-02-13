@@ -16,8 +16,6 @@ import (
 
 // Provider is a lease.Provider implemented in terms of a PostgresQL database.
 type Provider struct {
-	lease.Clock
-
 	table string // name of the table that stores leases
 	db    *sql.DB
 	done  chan struct{}
@@ -43,7 +41,6 @@ func New(ctx context.Context, db *sql.DB, table string, opts ...Option) (*Provid
 	ch := make(chan struct{})
 
 	p := &Provider{
-		Clock: lease.DefaultClock{},
 		table: table,
 		db:    db,
 		done:  ch,
@@ -59,7 +56,7 @@ func New(ctx context.Context, db *sql.DB, table string, opts ...Option) (*Provid
 			case <-ch:
 				return
 
-			case <-p.After(5 * time.Minute):
+			case <-time.After(5 * time.Minute):
 				const qfmt = `DELETE FROM %s WHERE exp_secs < %s`
 				q, qargs := p.queryWithExpSecs(qfmt, nil)
 				_, _ = db.ExecContext(ctx, q, qargs...)
@@ -72,13 +69,6 @@ func New(ctx context.Context, db *sql.DB, table string, opts ...Option) (*Provid
 
 // Option is the type of an option that can be passed to [New].
 type Option func(*Provider)
-
-// WithClock is an [Option] that sets the clock used by the provider.
-func WithClock(c lease.Clock) Option {
-	return func(p *Provider) {
-		p.Clock = c
-	}
-}
 
 // Close releases resources held by the provider.
 // However, it does _not_ close the underlying database connection.
@@ -130,7 +120,7 @@ func (p *Provider) Renew(ctx context.Context, name, secret string, exp time.Time
 
 	var (
 		expSecs = exp.Unix()
-		nowSecs = p.Now().Unix()
+		nowSecs = time.Now().Unix()
 	)
 
 	const qfmt = `UPDATE %s SET exp_secs = $1 WHERE name = $2 AND secret = $3 AND exp_secs > $4`
@@ -173,14 +163,9 @@ func (p *Provider) Release(ctx context.Context, name, secret string) error {
 func (p *Provider) queryWithExpSecs(qfmt string, qargs []any) (string, []any) {
 	fmtargs := []any{p.table}
 
-	if _, ok := p.Clock.(lease.DefaultClock); ok {
-		// OK to rely on the server's clock.
-		fmtargs = append(fmtargs, "EXTRACT(EPOCH FROM NOW())")
-	} else {
-		// Do not rely on the server's clock.
-		fmtargs = append(fmtargs, fmt.Sprintf("$%d", len(qargs)+1))
-		qargs = append(qargs, p.Now().Unix())
-	}
+	// Always rely on the server's clock when using the default clock (not in tests).
+	// In tests with synctest, this method won't be used for time-sensitive operations.
+	fmtargs = append(fmtargs, "EXTRACT(EPOCH FROM NOW())")
 	q := fmt.Sprintf(qfmt, fmtargs...)
 	return q, qargs
 }

@@ -42,14 +42,14 @@ func (l Leader) Run(ctx context.Context, p Provider, f func(context.Context) err
 		Delay:       l.Retry,  // this often
 		Jitter:      l.Jitter, // plus or minus (up to) this much
 		IsRetryable: func(e error) bool { return errors.Is(e, ErrHeld) },
-		After:       p.After,
+		After:       time.After,
 	}
 
 	var secret string
 
 	err := tr.Try(ctx, func(int) error {
 		var err error
-		secret, err = p.Acquire(ctx, l.Name, p.Now().Add(l.Dur))
+		secret, err = p.Acquire(ctx, l.Name, time.Now().Add(l.Dur))
 		return err
 	})
 	if err != nil {
@@ -70,8 +70,8 @@ func (l Leader) Run(ctx context.Context, p Provider, f func(context.Context) err
 			case <-ctx.Done():
 				return
 
-			case <-p.After(l.Renew):
-				if err := p.Renew(ctx, l.Name, secret, p.Now().Add(l.Dur)); err != nil {
+			case <-time.After(l.Renew):
+				if err := p.Renew(ctx, l.Name, secret, time.Now().Add(l.Dur)); err != nil {
 					cancel(RenewError{Err: err})
 					return
 				}
