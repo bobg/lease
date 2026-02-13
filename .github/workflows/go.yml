@@ -22,14 +22,14 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v6
       with:
-        go-version: 1.24
+        go-version-file: go.mod
 
     - name: Unit tests
       env:
@@ -48,7 +48,7 @@ jobs:
 
     - name: Modver
       if: ${{ github.event_name == 'pull_request' }}
-      uses: bobg/modver@v2.13.0
+      uses: bobg/modver@v2.14.0
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         pull_request_url: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
