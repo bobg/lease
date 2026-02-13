@@ -163,8 +163,9 @@ func (p *Provider) Release(ctx context.Context, name, secret string) error {
 func (p *Provider) queryWithExpSecs(qfmt string, qargs []any) (string, []any) {
 	fmtargs := []any{p.table}
 
-	// Always rely on the server's clock when using the default clock (not in tests).
-	// In tests with synctest, this method won't be used for time-sensitive operations.
+	// Always use the database server's clock for time comparisons.
+	// This is appropriate in production and acceptable in tests because
+	// synctest controls the Go runtime's time but not the database server's time.
 	fmtargs = append(fmtargs, "EXTRACT(EPOCH FROM NOW())")
 	q := fmt.Sprintf(qfmt, fmtargs...)
 	return q, qargs

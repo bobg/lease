@@ -16,6 +16,9 @@ import (
 // The provider parameter should be a fresh provider instance for the test.
 func Provider(ctx context.Context, t *testing.T, provider lease.Provider) {
 synctest.Run(func() {
+// In synctest, time.Now() returns the synthetic time controlled by synctest.
+// The initial time is midnight UTC 2000-01-01.
+// Time advances via time.Sleep calls within the synctest bubble.
 t0 := time.Now()
 
 secret, err := provider.Acquire(ctx, "test", t0.Add(10*time.Second))
