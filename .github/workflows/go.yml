@@ -38,8 +38,6 @@ jobs:
         POSTGRES_DB: test
         POSTGRES_USER: test
         POSTGRES_PASSWORD: test
-        GOEXPERIMENT: synctest
-        GODEBUG: asynctimerchan=0
       run: "go test -coverprofile=cover.out ./..."
 
     - name: Send coverage

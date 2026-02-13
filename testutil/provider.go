@@ -1,94 +1,92 @@
-//go:build goexperiment.synctest
-
 package testutil
 
 import (
-"context"
-"errors"
-"testing"
-"testing/synctest"
-"time"
+	"context"
+	"errors"
+	"testing"
+	"testing/synctest"
+	"time"
 
-"github.com/bobg/lease"
+	"github.com/bobg/lease"
 )
 
 // Provider tests the basic behavior of a [lease.Provider] implementation.
 // The provider parameter should be a fresh provider instance for the test.
 func Provider(ctx context.Context, t *testing.T, provider lease.Provider) {
-synctest.Run(func() {
-// In synctest, time.Now() returns the synthetic time controlled by synctest.
-// The initial time is midnight UTC 2000-01-01.
-// Time advances via time.Sleep calls within the synctest bubble.
-t0 := time.Now()
+	synctest.Test(t, func(t *testing.T) {
+		// In synctest, time.Now() returns the synthetic time controlled by synctest.
+		// The initial time is midnight UTC 2000-01-01.
+		// Time advances via time.Sleep calls within the synctest bubble.
+		t0 := time.Now()
 
-secret, err := provider.Acquire(ctx, "test", t0.Add(10*time.Second))
-if err != nil {
-t.Fatalf("Error acquiring lease: %s", err)
-}
-defer provider.Release(ctx, "test", secret)
+		secret, err := provider.Acquire(ctx, "test", t0.Add(10*time.Second))
+		if err != nil {
+			t.Fatalf("Error acquiring lease: %s", err)
+		}
+		defer provider.Release(ctx, "test", secret)
 
-_, err = provider.Acquire(ctx, "test", t0.Add(10*time.Second))
-if !errors.Is(err, lease.ErrHeld) {
-t.Errorf("got error %v, want ErrHeld", err)
-}
+		_, err = provider.Acquire(ctx, "test", t0.Add(10*time.Second))
+		if !errors.Is(err, lease.ErrHeld) {
+			t.Errorf("got error %v, want ErrHeld", err)
+		}
 
-secret2, err := provider.Acquire(ctx, "test2", t0.Add(20*time.Second))
-if err != nil {
-t.Fatal(err)
-}
-defer provider.Release(ctx, "test2", secret2)
+		secret2, err := provider.Acquire(ctx, "test2", t0.Add(20*time.Second))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer provider.Release(ctx, "test2", secret2)
 
-time.Sleep(5 * time.Second) // i.e. t0+5s
+		time.Sleep(5 * time.Second) // i.e. t0+5s
 
-_, err = provider.Acquire(ctx, "test", t0.Add(10*time.Second))
-if !errors.Is(err, lease.ErrHeld) {
-t.Errorf("got error %v, want ErrHeld", err)
-}
+		_, err = provider.Acquire(ctx, "test", t0.Add(10*time.Second))
+		if !errors.Is(err, lease.ErrHeld) {
+			t.Errorf("got error %v, want ErrHeld", err)
+		}
 
-time.Sleep(10 * time.Second) // i.e. t0+15s
+		time.Sleep(10 * time.Second) // i.e. t0+15s
 
-secret3, err := provider.Acquire(ctx, "test", t0.Add(40*time.Second))
-if err != nil {
-t.Fatalf("Error acquiring expired lease: %s", err)
-}
-defer provider.Release(ctx, "test", secret3)
+		secret3, err := provider.Acquire(ctx, "test", t0.Add(40*time.Second))
+		if err != nil {
+			t.Fatalf("Error acquiring expired lease: %s", err)
+		}
+		defer provider.Release(ctx, "test", secret3)
 
-// Can no longer renew the lease with the old secret.
-err = provider.Renew(ctx, "test", secret, t0.Add(20*time.Second))
-if !errors.Is(err, lease.ErrNotHeld) {
-t.Errorf("got error %v, want ErrNotHeld", err)
-}
+		// Can no longer renew the lease with the old secret.
+		err = provider.Renew(ctx, "test", secret, t0.Add(20*time.Second))
+		if !errors.Is(err, lease.ErrNotHeld) {
+			t.Errorf("got error %v, want ErrNotHeld", err)
+		}
 
-_, err = provider.Acquire(ctx, "test2", t0.Add(20*time.Second))
-if !errors.Is(err, lease.ErrHeld) {
-t.Errorf("got error %v, want ErrHeld", err)
-}
+		_, err = provider.Acquire(ctx, "test2", t0.Add(20*time.Second))
+		if !errors.Is(err, lease.ErrHeld) {
+			t.Errorf("got error %v, want ErrHeld", err)
+		}
 
-err = provider.Release(ctx, "test2", secret2)
-if err != nil {
-t.Fatalf("Error releasing lease: %s", err)
-}
+		err = provider.Release(ctx, "test2", secret2)
+		if err != nil {
+			t.Fatalf("Error releasing lease: %s", err)
+		}
 
-time.Sleep(20 * time.Second) // i.e. t0+35s
+		time.Sleep(20 * time.Second) // i.e. t0+35s
 
-err = provider.Renew(ctx, "test", secret3, t0.Add(50*time.Second))
-if err != nil {
-t.Fatalf("Error renewing lease: %s", err)
-}
+		err = provider.Renew(ctx, "test", secret3, t0.Add(50*time.Second))
+		if err != nil {
+			t.Fatalf("Error renewing lease: %s", err)
+		}
 
-time.Sleep(10 * time.Second) // i.e. t0+45s
+		time.Sleep(10 * time.Second) // i.e. t0+45s
 
-_, err = provider.Acquire(ctx, "test", t0.Add(60*time.Second))
-if !errors.Is(err, lease.ErrHeld) {
-t.Errorf("got error %v, want ErrHeld", err)
-}
+		_, err = provider.Acquire(ctx, "test", t0.Add(60*time.Second))
+		if !errors.Is(err, lease.ErrHeld) {
+			t.Errorf("got error %v, want ErrHeld", err)
+		}
 
-time.Sleep(10 * time.Second) // i.e. t0+55s
+		time.Sleep(10 * time.Second) // i.e. t0+55s
 
-secret4, err := provider.Acquire(ctx, "test", t0.Add(80*time.Second))
-if err != nil {
-t.Fatalf("Error acquiring expired lease: %s", err)
-}
-defer provider.Release(ctx, "test", secret4)
-})
+		secret4, err := provider.Acquire(ctx, "test", t0.Add(80*time.Second))
+		if err != nil {
+			t.Fatalf("Error acquiring expired lease: %s", err)
+		}
+		defer provider.Release(ctx, "test", secret4)
+	})
 }

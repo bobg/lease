@@ -1,6 +1,6 @@
 module github.com/bobg/lease
 
-go 1.23
+go 1.25
 
 require (
 	github.com/bobg/errors v1.1.0
