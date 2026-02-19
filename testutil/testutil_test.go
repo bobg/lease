@@ -1,8 +1,8 @@
 package testutil
 
 import (
-	"context"
 	"testing"
+	"testing/synctest"
 
 	"github.com/bobg/lease/mem"
 )
@@ -11,11 +11,15 @@ import (
 // Duplicating them here solves a problem in how test coverage is measured.
 
 func TestLeader(t *testing.T) {
-	p := mem.New()
-	Leader(context.Background(), t, p)
+	synctest.Test(t, func(t *testing.T) {
+		p := mem.New()
+		Leader(t.Context(), t, p)
+	})
 }
 
 func TestProvider(t *testing.T) {
-	p := mem.New()
-	Provider(context.Background(), t, p)
+	synctest.Test(t, func(t *testing.T) {
+		p := mem.New()
+		Provider(t.Context(), t, p)
+	})
 }

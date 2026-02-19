@@ -1,14 +1,16 @@
 package lease_test
 
 import (
-	"context"
 	"testing"
+	"testing/synctest"
 
 	"github.com/bobg/lease/mem"
 	"github.com/bobg/lease/testutil"
 )
 
 func TestLeader(t *testing.T) {
-	p := mem.New()
-	testutil.Leader(context.Background(), t, p)
+	synctest.Test(t, func(t *testing.T) {
+		p := mem.New()
+		testutil.Leader(t.Context(), t, p)
+	})
 }
