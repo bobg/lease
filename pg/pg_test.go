@@ -1,7 +1,6 @@
 package pg
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -14,10 +13,10 @@ import (
 )
 
 func TestProvider(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	synctest.Test(t, func(t *testing.T) {
-		withDB(ctx, t, func(db *sql.DB) {
+		withDB(t, func(db *sql.DB) {
 			provider, err := New(ctx, db, "leases")
 			if err != nil {
 				t.Fatal(err)
@@ -32,7 +31,7 @@ func TestLeader(t *testing.T) {
 	ctx := t.Context()
 
 	synctest.Test(t, func(t *testing.T) {
-		withDB(ctx, t, func(db *sql.DB) {
+		withDB(t, func(db *sql.DB) {
 			provider, err := New(ctx, db, "leases")
 			if err != nil {
 				t.Fatal(err)
@@ -43,7 +42,7 @@ func TestLeader(t *testing.T) {
 	})
 }
 
-func withDB(ctx context.Context, t *testing.T, f func(*sql.DB)) {
+func withDB(t *testing.T, f func(*sql.DB)) {
 	var (
 		dbhost   = os.Getenv("POSTGRES_HOST")
 		dbport   = os.Getenv("POSTGRES_PORT")
