@@ -16,13 +16,15 @@ import (
 func TestProvider(t *testing.T) {
 	ctx := context.Background()
 
-	withDB(ctx, t, func(db *sql.DB) {
-		provider, err := New(ctx, db, "leases")
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer provider.Close()
-		testutil.Provider(ctx, t, provider)
+	synctest.Test(t, func(t *testing.T) {
+		withDB(ctx, t, func(db *sql.DB) {
+			provider, err := New(ctx, db, "leases")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer provider.Close()
+			testutil.Provider(ctx, t, provider)
+		})
 	})
 }
 
